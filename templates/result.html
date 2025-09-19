@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction Result</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0fdf4;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .box {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h2 { color: #2d6a4f; margin-bottom: 20px; }
+        .result {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1b4332;
+            margin-bottom: 20px;
+        }
+        a {
+            display: inline-block;
+            padding: 12px 20px;
+            background: #2d6a4f;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        a:hover { background: #1b4332; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>🌾 Prediction Result</h2>
+        {% if prediction %}
+            <div class="result">Predicted Yield: {{ prediction|round(3) }} tonnes/hectare</div>
+        {% elif error %}
+            <div class="result" style="color:red;">Error: {{ error }}</div>
+        {% endif %}
+        <a href="/">🔙 Back to Form</a>
+    </div>
+</body>
+</html>
