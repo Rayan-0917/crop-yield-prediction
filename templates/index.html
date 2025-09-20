@@ -2,48 +2,107 @@
 <html>
 <head>
     <title>Crop Yield Prediction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(to right, #e6f9ec, #f2fff6);
-            color: #333;
-            padding: 20px;
-        }
-        .container {
-            max-width: 700px;
-            margin: 40px auto;
-            background: #fff;
-            padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
-        }
-        h2 { text-align: center; margin-bottom: 25px; color: #2d6a4f; }
-        label { display: block; margin-top: 12px; font-weight: 600; }
-        input, select {
-            width: 100%; padding: 10px; margin-top: 6px;
-            border: 1px solid #ccc; border-radius: 8px;
-        }
-        button {
-            margin-top: 20px; width: 100%; padding: 12px;
-            background: #2d6a4f; color: #fff; font-size: 16px;
-            border: none; border-radius: 8px; cursor: pointer;
-        }
-        button:hover { background: #1b4332; }
-    </style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #d4fc79, #96e6a1);
+        color: #333;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .container {
+        width: 100%;
+        max-width: 700px;
+        background: #ffffffcc;
+        backdrop-filter: blur(6px);
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s ease;
+    }
+    .container:hover {
+        transform: translateY(-4px);
+    }
+    h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #1b4332;
+        font-size: 1.8rem;
+    }
+    label {
+        display: block;
+        margin-top: 14px;
+        font-weight: 600;
+        color: #2d6a4f;
+    }
+    input, select {
+        width: 100%;
+        padding: 12px 14px;
+        margin-top: 6px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+    input:focus, select:focus {
+        border-color: #2d6a4f;
+        outline: none;
+        box-shadow: 0 0 6px rgba(45, 106, 79, 0.3);
+    }
+    button {
+        margin-top: 25px;
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(to right, #2d6a4f, #40916c);
+        color: #fff;
+        font-size: 17px;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.1s;
+    }
+    button:hover {
+        background: linear-gradient(to right, #1b4332, #2d6a4f);
+        transform: scale(1.02);
+    }
+    .info {
+        margin-top: 12px;
+        font-size: 0.95rem;
+        font-style: italic;
+        color: #40916c;
+    }
+    .note {
+        margin-top: 16px;
+        font-size: 0.9rem;
+        color: #444;
+        background: #f8fdf9;
+        padding: 10px 14px;
+        border-left: 4px solid #2d6a4f;
+        border-radius: 8px;
+    }
+</style>
+
 </head>
 <body>
     <div class="container">
         <h2>🌾 Crop Yield Prediction</h2>
-        <form action="/predict" method="post">
+        <p class="info" id="auto-info">Detecting your location and weather... (allow location / network access)</p>
+
+        <form id="predict-form" action="/predict" method="post">
             <label>State:</label>
-            <select name="State_Code" required>
+            <select id="state-select" name="State_Code" required>
                 {% for code, name in states.items() %}
                 <option value="{{ code }}">{{ name }}</option>
                 {% endfor %}
             </select>
 
             <label>District:</label>
-            <select name="District_Code" required>
+            <select id="district-select" name="District_Code" required>
                 {% for code, name in districts.items() %}
                 <option value="{{ code }}">{{ name }}</option>
                 {% endfor %}
@@ -81,26 +140,94 @@
             <label>Year:</label>
             <input type="number" name="Year_Numeric" required>
 
-            <label>Highest Temperature (°C):</label>
-            <input type="number" step="0.1" name="High_Temp" required>
-
-            <label>Lowest Temperature (°C):</label>
-            <input type="number" step="0.1" name="Low_Temp" required>
-
-            <label>Average Temperature (°C):</label>
-            <input type="number" step="0.1" name="Avg_Temp" required>
-
-            <label>Average Rainfall (last 5 years, mm):</label>
-            <input type="number" step="0.1" name="Rainfall" required>
-
-            <label>Highest Humidity (last 5 years):</label>
-            <input type="number" step="0.1" name="High_Humidity" required>
-
-            <label>Lowest Humidity (last 5 years):</label>
-            <input type="number" step="0.1" name="Low_Humidity" required>
+            <!-- Hidden fields for auto-detected weather -->
+            <input type="hidden" id="High_Temp" name="High_Temp" value="0">
+            <input type="hidden" id="Low_Temp" name="Low_Temp" value="0">
+            <input type="hidden" id="Avg_Temp" name="Avg_Temp" value="0">
+            <input type="hidden" id="Rainfall" name="Rainfall" value="0">
+            <input type="hidden" id="High_Humidity" name="High_Humidity" value="0">
+            <input type="hidden" id="Low_Humidity" name="Low_Humidity" value="0">
 
             <button type="submit">Predict</button>
         </form>
+
+        <div style="margin-top:12px; font-size:0.9rem; color:#555;">
+            <strong>Note:</strong> Temperature, humidity and recent rainfall are auto-detected for your location. If detection fails, please select your district manually and fill the form.
+        </div>
     </div>
+
+<script>
+/*
+Flow:
+1) Use ip-api from client to get approximate lat/lon (no key needed).
+2) POST lat/lon to our Flask endpoint /reverse_geocode which will call MapmyIndia and OpenWeather.
+3) Apply returned district_code (if matched) and fill hidden weather inputs.
+References:
+ - ip-api JSON endpoint: http://ip-api.com/json (no key).
+ - If you prefer to make ip detection server-side, you can call the same endpoint from server.
+*/
+async function detectAndFill() {
+    const infoEl = document.getElementById("auto-info");
+    try {
+        infoEl.textContent = "Detecting location (ip)...";
+        // ip-api is public and returns lat/lon; CORS is allowed for simple use
+        const ipRes = await fetch('http://ip-api.com/json/');
+        const ipJson = await ipRes.json();
+        if (!ipJson || !ipJson.lat || !ipJson.lon) {
+            infoEl.textContent = "Could not detect location from IP. Please select district manually.";
+            return;
+        }
+        const lat = ipJson.lat;
+        const lon = ipJson.lon;
+        infoEl.textContent = `Location detected: ${ipJson.city || ''} ${ipJson.regionName || ''}. Fetching district and weather...`;
+
+        // Send lat/lon to server-side endpoint which uses MapmyIndia + OpenWeather
+        const rr = await fetch('/reverse_geocode', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({lat: lat, lon: lon})
+        });
+        const rrj = await rr.json();
+        if (rrj.error) {
+            infoEl.textContent = "Reverse geocode/weather lookup failed. Please complete the form manually.";
+            console.error(rrj.error);
+            return;
+        }
+
+        // If district code returned, set select
+        if (rrj.district_code !== null && rrj.district_code !== undefined) {
+            const districtSelect = document.getElementById("district-select");
+            // Set selected value if option exists
+            const opt = Array.from(districtSelect.options).find(o => o.value == rrj.district_code);
+            if (opt) {
+                districtSelect.value = rrj.district_code;
+                infoEl.textContent = `District auto-selected: ${opt.text}. Weather values applied.`;
+            } else {
+                infoEl.textContent = `District detected (${rrj.matched_district_name || 'unknown'}) but no exact match in list. Weather values applied.`;
+            }
+        } else if (rrj.matched_district_name) {
+            infoEl.textContent = `Detected district: ${rrj.matched_district_name}. Please verify district selection. Weather values applied.`;
+        } else {
+            infoEl.textContent = "Could not detect district; weather values applied.";
+        }
+
+        // Fill hidden fields with weather data (server computed)
+        const w = rrj.weather || {};
+        document.getElementById("High_Temp").value = (w.high_temp !== null ? w.high_temp : 0);
+        document.getElementById("Low_Temp").value = (w.low_temp !== null ? w.low_temp : 0);
+        document.getElementById("Avg_Temp").value = (w.avg_temp !== null ? w.avg_temp : 0);
+        document.getElementById("Rainfall").value = (w.rainfall_mm !== null ? w.rainfall_mm : 0);
+        document.getElementById("High_Humidity").value = (w.high_humidity !== null ? w.high_humidity : 0);
+        document.getElementById("Low_Humidity").value = (w.low_humidity !== null ? w.low_humidity : 0);
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("auto-info").textContent = "Automatic detection failed. Please fill the form manually.";
+    }
+}
+
+// run on page load
+window.addEventListener('load', detectAndFill);
+</script>
 </body>
 </html>

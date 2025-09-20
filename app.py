@@ -1,13 +1,22 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 import pickle
 import pandas as pd
 import numpy as np
+import os
+import requests
+from dotenv import load_dotenv
 
-# Load model
+# Load .env
+load_dotenv()
+
+MAPMYINDIA_KEY = os.getenv("MAPMYINDIA_KEY")
+OPENWEATHER_KEY = os.getenv("OPENWEATHER_KEY")
+
+# --- Load model ---
 with open("model_ET.pkl", "rb") as f:
     model = pickle.load(f)
 
-# mappings
+# --- mappings (kept from your original code) ---
 state_mapping = {0: 'West Bengal'}
 
 district_mapping = {
@@ -50,6 +59,127 @@ def home():
         seasons=season_mapping,
     )
 
+@app.route("/reverse_geocode", methods=["POST"])
+def reverse_geocode():
+    """
+    Accepts JSON: { "lat": <float>, "lon": <float> }
+    Returns JSON with:
+      - matched_district_name (string)
+      - district_code (int or null)
+      - weather fields: high_temp, low_temp, avg_temp, rainfall_mm, high_humidity, low_humidity
+    """
+    try:
+        payload = request.get_json() or {}
+        lat = payload.get("lat")
+        lon = payload.get("lon")
+
+        if lat is None or lon is None:
+            return jsonify({"error": "Missing lat/lon"}), 400
+
+        # 1) MapmyIndia Reverse Geocode
+        district_name = None
+        if MAPMYINDIA_KEY:
+            # Example endpoint (MapmyIndia docs show: /advancedmaps/v1/<key>/rev_geocode?lat=...&lng=...)
+            mm_url = f"https://apis.mapmyindia.com/advancedmaps/v1/{MAPMYINDIA_KEY}/rev_geocode"
+            params = {"lat": lat, "lng": lon}
+            try:
+                mm_res = requests.get(mm_url, params=params, timeout=6)
+                mm_json = mm_res.json()
+                # Attempt to extract district from returned JSON robustly.
+                # MapmyIndia responses vary across versions; search for 'district' key anywhere.
+                def find_key(obj, keyname):
+                    if isinstance(obj, dict):
+                        for k, v in obj.items():
+                            if k.lower() == keyname.lower():
+                                return v
+                            found = find_key(v, keyname)
+                            if found:
+                                return found
+                    elif isinstance(obj, list):
+                        for item in obj:
+                            found = find_key(item, keyname)
+                            if found:
+                                return found
+                    return None
+
+                district_name = find_key(mm_json, "district")
+                if not district_name:
+                    # fallback: try adminInfo or subdistrict/locality fields
+                    district_name = find_key(mm_json, "adminInfo") or find_key(mm_json, "subdistrict") or find_key(mm_json, "city") or find_key(mm_json, "state")
+            except Exception as ex:
+                # non-fatal: continue without district
+                district_name = None
+
+        # Normalize district name for matching
+        matched_code = None
+        matched_name = None
+        if district_name:
+            d_norm = str(district_name).strip().lower()
+            # try to match with district_mapping by substring match
+            for code, name in district_mapping.items():
+                if name and name.lower() in d_norm:
+                    matched_code = code
+                    matched_name = name
+                    break
+            # If not matched exactly, try reverse: see if any value contains the district fragment
+            if matched_code is None:
+                for code, name in district_mapping.items():
+                    if d_norm in name.lower() or name.lower() in d_norm:
+                        matched_code = code
+                        matched_name = name
+                        break
+
+        # 2) OpenWeather current weather
+        weather_data = {
+            "avg_temp": None,
+            "high_temp": None,
+            "low_temp": None,
+            "rainfall_mm": 0.0,
+            "high_humidity": None,
+            "low_humidity": None,
+        }
+        if OPENWEATHER_KEY:
+            ow_url = "https://api.openweathermap.org/data/2.5/weather"
+            params = {"lat": lat, "lon": lon, "appid": OPENWEATHER_KEY, "units": "metric"}
+            try:
+                ow_res = requests.get(ow_url, params=params, timeout=6)
+                ow_json = ow_res.json()
+                main = ow_json.get("main", {})
+                rain = ow_json.get("rain", {})  # may include "1h" or "3h"
+                # temperatures
+                temp = main.get("temp")
+                temp_min = main.get("temp_min")
+                temp_max = main.get("temp_max")
+                humidity = main.get("humidity")
+
+                # Fill weather_data with sensible fallbacks
+                weather_data["avg_temp"] = temp if temp is not None else None
+                weather_data["high_temp"] = temp_max if temp_max is not None else temp
+                weather_data["low_temp"] = temp_min if temp_min is not None else temp
+                # rainfall: prefer 1h then 3h then 0
+                rainfall = 0.0
+                if isinstance(rain, dict):
+                    rainfall = float(rain.get("1h") or rain.get("3h") or 0.0)
+                weather_data["rainfall_mm"] = rainfall
+                weather_data["high_humidity"] = humidity
+                weather_data["low_humidity"] = humidity
+            except Exception as ex:
+                # non-fatal: leave weather_data as None/0
+                pass
+
+        response = {
+            "matched_district_name": matched_name or district_name,
+            "district_code": matched_code,
+            "weather": weather_data,
+            "raw_lat": lat,
+            "raw_lon": lon
+        }
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
@@ -65,15 +195,16 @@ def predict():
             'Area_Hectares': float(request.form['Area_Hectares']),
             'Production': float(request.form['Production']),
             'Year_Numeric': int(request.form['Year_Numeric']),
-            'Highest Temperature(in degree celsius)': float(request.form['High_Temp']),
-            'Lowest Temperature(in degree celsius)': float(request.form['Low_Temp']),
-            'Average Temperature(in degree celsius)': float(request.form['Avg_Temp']),
-            'Average Rainfall(past 5 years)': float(request.form['Rainfall']),
-            'Highest Humidity(past 5 years)': float(request.form['High_Humidity']),
-            'Lowest Humidity(past 5 years)': float(request.form['Low_Humidity'])
+            # The following are auto-filled hidden fields populated by client JS
+            'Highest Temperature(in degree celsius)': float(request.form.get('High_Temp', 0.0)),
+            'Lowest Temperature(in degree celsius)': float(request.form.get('Low_Temp', 0.0)),
+            'Average Temperature(in degree celsius)': float(request.form.get('Avg_Temp', 0.0)),
+            'Average Rainfall(past 5 years)': float(request.form.get('Rainfall', 0.0)),
+            'Highest Humidity(past 5 years)': float(request.form.get('High_Humidity', 0.0)),
+            'Lowest Humidity(past 5 years)': float(request.form.get('Low_Humidity', 0.0))
         }
 
-        # Feature engineering
+        # Feature engineering (same as your original)
         data['Log_Area'] = np.log1p(data['Area_Hectares'])
         data['Log_Production'] = np.log1p(data['Production'])
         data['Temp_Range'] = data['Highest Temperature(in degree celsius)'] - data['Lowest Temperature(in degree celsius)']
@@ -110,5 +241,7 @@ def predict():
     except Exception as e:
         return render_template("result.html", error=str(e))
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    # In production, use a proper WSGI server
+    app.run(debug=True, host="0.0.0.0", port=5000)

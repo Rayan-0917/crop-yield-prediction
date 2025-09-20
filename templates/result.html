@@ -3,41 +3,63 @@
 <head>
     <title>Prediction Result</title>
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f0fdf4;
-            color: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .box {
-            background: #fff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        h2 { color: #2d6a4f; margin-bottom: 20px; }
-        .result {
-            font-size: 22px;
-            font-weight: bold;
-            color: #1b4332;
-            margin-bottom: 20px;
-        }
-        a {
-            display: inline-block;
-            padding: 12px 20px;
-            background: #2d6a4f;
-            color: #fff;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        a:hover { background: #1b4332; }
-    </style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #c9ffbf, #ffafbd);
+        color: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .box {
+        background: #ffffffee;
+        backdrop-filter: blur(8px);
+        padding: 50px;
+        border-radius: 18px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        text-align: center;
+        max-width: 500px;
+        width: 90%;
+        transition: transform 0.2s ease;
+    }
+    .box:hover {
+        transform: translateY(-4px);
+    }
+    h2 {
+        color: #1b4332;
+        margin-bottom: 24px;
+        font-size: 1.8rem;
+    }
+    .result {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2d6a4f;
+        margin-bottom: 25px;
+    }
+    .error {
+        color: #d90429;
+        font-size: 20px;
+        font-weight: bold;
+    }
+    a {
+        display: inline-block;
+        padding: 14px 26px;
+        background: linear-gradient(to right, #2d6a4f, #40916c);
+        color: #fff;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: background 0.3s, transform 0.1s;
+    }
+    a:hover {
+        background: linear-gradient(to right, #1b4332, #2d6a4f);
+        transform: scale(1.05);
+    }
+</style>
+
 </head>
 <body>
     <div class="box">
