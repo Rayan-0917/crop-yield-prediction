@@ -163,7 +163,7 @@ Flow:
 2) POST lat/lon to our Flask endpoint /reverse_geocode which will call MapmyIndia and OpenWeather.
 3) Apply returned district_code (if matched) and fill hidden weather inputs.
 References:
- - ip-api JSON endpoint: http://ip-api.com/json (no key).
+ - ip-api JSON endpoint: https://ip-api.com/json (no key).
  - If you prefer to make ip detection server-side, you can call the same endpoint from server.
 */
 async function detectAndFill() {
@@ -171,7 +171,7 @@ async function detectAndFill() {
     try {
         infoEl.textContent = "Detecting location (ip)...";
         // ip-api is public and returns lat/lon; CORS is allowed for simple use
-        const ipRes = await fetch('http://ip-api.com/json/');
+        const ipRes = await fetch('https://ip-api.com/json/');
         const ipJson = await ipRes.json();
         if (!ipJson || !ipJson.lat || !ipJson.lon) {
             infoEl.textContent = "Could not detect location from IP. Please select district manually.";
