@@ -1,164 +1,337 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Crop Yield Prediction</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #d4fc79, #96e6a1); color: #333; padding: 20px; min-height:100vh; display:flex; align-items:center; justify-content:center; }
-        .container { width:100%; max-width:700px; background:#ffffffcc; backdrop-filter:blur(6px); padding:40px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.15); transition: transform 0.2s ease;}
-        .container:hover { transform: translateY(-4px); }
-        h2 { text-align:center; margin-bottom:25px; color:#1b4332; font-size:1.8rem; }
-        label { display:block; margin-top:14px; font-weight:600; color:#2d6a4f; }
-        input, select { width:100%; padding:12px 14px; margin-top:6px; border:1px solid #ccc; border-radius:10px; font-size:1rem; transition: all 0.2s; }
-        input:focus, select:focus { border-color:#2d6a4f; outline:none; box-shadow:0 0 6px rgba(45,106,79,0.3); }
-        button { margin-top:25px; width:100%; padding:14px; background: linear-gradient(to right,#2d6a4f,#40916c); color:#fff; font-size:17px; font-weight:600; border:none; border-radius:10px; cursor:pointer; transition: background 0.3s, transform 0.1s; }
-        button:hover { background: linear-gradient(to right,#1b4332,#2d6a4f); transform: scale(1.02); }
-        .info { margin-top:12px; font-size:0.95rem; font-style:italic; color:#40916c; }
-        .note { margin-top:16px; font-size:0.9rem; color:#444; background:#f8fdf9; padding:10px 14px; border-left:4px solid #2d6a4f; border-radius:8px; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #d4fc79, #96e6a1);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: #ffffffcc;
+            backdrop-filter: blur(6px);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-4px);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #1b4332;
+            font-size: 1.8rem;
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            font-weight: 600;
+            color: #2d6a4f;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #2d6a4f;
+            outline: none;
+            box-shadow: 0 0 6px rgba(45, 106, 79, 0.3);
+        }
+
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(to right, #2d6a4f, #40916c);
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #1b4332, #2d6a4f);
+            transform: scale(1.02);
+        }
+
+        .info {
+            margin-top: 12px;
+            font-size: 0.95rem;
+            font-style: italic;
+            color: #40916c;
+        }
+
+        .note {
+            margin-top: 16px;
+            font-size: 0.9rem;
+            color: #444;
+            background: #f8fdf9;
+            padding: 10px 14px;
+            border-left: 4px solid #2d6a4f;
+            border-radius: 8px;
+        }
+
+        .chatbot-btn-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .chatbot-btn {
+            padding: 12px 22px;
+            background: linear-gradient(to right, #1b4332, #2d6a4f);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .chatbot-btn:hover {
+            background: linear-gradient(to right, #2d6a4f, #40916c);
+            transform: scale(1.05);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Fixed bottom-right Google Translate container */
+        .translate-fixed {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(to right, #2d6a4f, #40916c);
+            padding: 8px 12px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            z-index: 9999;
+        }
+
+        /* Hide Google branding */
+        .goog-logo-link,
+        .goog-te-gadget-icon {
+            display: none !important;
+        }
+
+        /* Adjust iframe container */
+        .goog-te-banner-frame.skiptranslate {
+            display: none !important;
+        }
+
+        body {
+            top: 0 !important;
+        }
+
+        /* Optional: make select inside look better */
+        .translate-fixed select {
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+
+        .translate-fixed select:focus {
+            outline: none;
+        }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <h2>🌾 Crop Yield Prediction</h2>
-    <p class="info" id="auto-info">Detecting your location and weather...</p>
+    <div class="container">
+        <h2>🌾 Crop Yield Prediction</h2>
 
-    <form id="predict-form" action="/predict" method="post">
-        <label>State:</label>
-        <select id="state-select" name="State_Code" required>
-            {% for code, name in states.items() %}
-            <option value="{{ code }}">{{ name }}</option>
-            {% endfor %}
-        </select>
+        <!-- Chatbot Button -->
+        <div class="chatbot-btn-container">
+            <a href="https://crop-chatbot-883kkhaujcwracpfq2ozam.streamlit.app/" target="_blank">
+                <button type="button" class="chatbot-btn">💬 Chatbot Assistant</button>
+            </a>
+        </div>
 
-        <label>District:</label>
-        <select id="district-select" name="District_Code" required>
-            {% for code, name in districts.items() %}
-            <option value="{{ code }}">{{ name }}</option>
-            {% endfor %}
-        </select>
+        <p class="info" id="auto-info">Detecting your location and weather...</p>
 
-        <label>Crop:</label>
-        <select name="Crop_Code" required>
-            {% for code, name in crops.items() %}
-            <option value="{{ code }}">{{ name }}</option>
-            {% endfor %}
-        </select>
+        <form id="predict-form" action="/predict" method="post">
+            <label>State:</label>
+            <select id="state-select" name="State_Code" required>
+                {% for code, name in states.items() %}
+                <option value="{{ code }}">{{ name }}</option>
+                {% endfor %}
+            </select>
 
-        <label>Season:</label>
-        <select name="Season_Code" required>
-            {% for code, name in seasons.items() %}
-            <option value="{{ code }}">{{ name }}</option>
-            {% endfor %}
-        </select>
+            <label>District:</label>
+            <select id="district-select" name="District_Code" required>
+                {% for code, name in districts.items() %}
+                <option value="{{ code }}">{{ name }}</option>
+                {% endfor %}
+            </select>
 
-        <label>Major Soil Type:</label>
-        <input type="text" name="Major_Soil_Type" required>
+            <label>Crop:</label>
+            <select name="Crop_Code" required>
+                {% for code, name in crops.items() %}
+                <option value="{{ code }}">{{ name }}</option>
+                {% endfor %}
+            </select>
 
-        <label>Second Major Soil Type:</label>
-        <input type="text" name="Second_Major_Soil_Type" required>
+            <label>Season:</label>
+            <select name="Season_Code" required>
+                {% for code, name in seasons.items() %}
+                <option value="{{ code }}">{{ name }}</option>
+                {% endfor %}
+            </select>
 
-        <label>Irrigation Used:</label>
-        <input type="text" name="Irrigation_Used" required>
+            <label>Major Soil Type:</label>
+            <input type="text" name="Major_Soil_Type" required>
 
-        <label>Area (Hectares):</label>
-        <input type="number" step="0.01" name="Area_Hectares" required>
+            <label>Second Major Soil Type:</label>
+            <input type="text" name="Second_Major_Soil_Type" required>
 
-        <label>Production:</label>
-        <input type="number" step="0.01" name="Production" required>
+            <label>Irrigation Used:</label>
+            <input type="text" name="Irrigation_Used" required>
 
-        <label>Year:</label>
-        <input type="number" name="Year_Numeric" required>
+            <label>Area (Hectares):</label>
+            <input type="number" step="0.01" name="Area_Hectares" required>
 
-        <!-- Hidden weather fields -->
-        <input type="hidden" id="High_Temp" name="High_Temp">
-        <input type="hidden" id="Low_Temp" name="Low_Temp">
-        <input type="hidden" id="Avg_Temp" name="Avg_Temp">
-        <input type="hidden" id="Rainfall" name="Rainfall">
-        <input type="hidden" id="High_Humidity" name="High_Humidity">
-        <input type="hidden" id="Low_Humidity" name="Low_Humidity">
+            <label>Production:</label>
+            <input type="number" step="0.01" name="Production" required>
 
-        <button type="submit">Predict</button>
-    </form>
+            <label>Year:</label>
+            <input type="number" name="Year_Numeric" required>
 
-    <div class="note">
-        Temperature, humidity and recent rainfall are auto-detected for your location. If detection fails, please select your district manually.
+            <!-- Hidden weather fields -->
+            <input type="hidden" id="High_Temp" name="High_Temp">
+            <input type="hidden" id="Low_Temp" name="Low_Temp">
+            <input type="hidden" id="Avg_Temp" name="Avg_Temp">
+            <input type="hidden" id="Rainfall" name="Rainfall">
+            <input type="hidden" id="High_Humidity" name="High_Humidity">
+            <input type="hidden" id="Low_Humidity" name="Low_Humidity">
+
+            <button type="submit">Predict</button>
+        </form>
+
+        <div class="note">
+            Temperature, humidity and recent rainfall are auto-detected for your location. If detection fails, please
+            select your district manually.
+        </div>
     </div>
-</div>
 
-<script>
-async function detectAndFill() {
-    const infoEl = document.getElementById("auto-info");
-    try {
-        // 1️⃣ Try browser geolocation
-        if (navigator.geolocation) {
-            infoEl.textContent = "Requesting browser location...";
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                await fetchServer(pos.coords.latitude, pos.coords.longitude);
-            }, async (err) => {
-                console.warn(err);
-                infoEl.textContent = "Location permission denied, trying IP-based detection...";
-                await fallbackIP();
-            });
-        } else {
-            await fallbackIP();
-        }
-    } catch (err) {
-        console.error(err);
-        infoEl.textContent = "Automatic detection failed. Please fill the form manually.";
-    }
+    <!-- Google Translate Fixed -->
+    <div class="translate-fixed">
+        <div id="google_translate_element"></div>
+    </div>
 
-    async function fallbackIP() {
-        try {
-            const ipRes = await fetch('https://ipwho.is/');
-            const ipJson = await ipRes.json();
-            if (!ipJson || !ipJson.latitude || !ipJson.longitude) {
-                infoEl.textContent = "Could not detect location from IP. Please select district manually.";
-                return;
-            }
-            await fetchServer(ipJson.latitude, ipJson.longitude);
-        } catch (err) {
-            console.error(err);
-            infoEl.textContent = "IP-based detection failed. Please fill the form manually.";
-        }
-    }
-
-    async function fetchServer(lat, lon) {
-        infoEl.textContent = "Fetching district and weather data...";
-        try {
-            const resp = await fetch('/reverse_geocode', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({lat, lon})
-            });
-            const data = await resp.json();
-            if (data.error) throw new Error(data.error);
-
-            // Set district select
-            if (data.district_code != null) {
-                const districtSelect = document.getElementById("district-select");
-                const opt = Array.from(districtSelect.options).find(o => o.value == data.district_code);
-                if (opt) districtSelect.value = data.district_code;
+    <script>
+        async function detectAndFill() {
+            const infoEl = document.getElementById("auto-info");
+            try {
+                if (navigator.geolocation) {
+                    infoEl.textContent = "Requesting browser location...";
+                    navigator.geolocation.getCurrentPosition(async (pos) => {
+                        await fetchServer(pos.coords.latitude, pos.coords.longitude);
+                    }, async (err) => {
+                        console.warn(err);
+                        infoEl.textContent = "Location permission denied, trying IP-based detection...";
+                        await fallbackIP();
+                    });
+                } else {
+                    await fallbackIP();
+                }
+            } catch (err) {
+                console.error(err);
+                infoEl.textContent = "Automatic detection failed. Please fill the form manually.";
             }
 
-            // Fill weather hidden fields
-            const w = data.weather || {};
-            document.getElementById("High_Temp").value = w.high_temp || 0;
-            document.getElementById("Low_Temp").value = w.low_temp || 0;
-            document.getElementById("Avg_Temp").value = w.avg_temp || 0;
-            document.getElementById("Rainfall").value = w.rainfall_mm || 0;
-            document.getElementById("High_Humidity").value = w.high_humidity || 0;
-            document.getElementById("Low_Humidity").value = w.low_humidity || 0;
+            async function fallbackIP() {
+                try {
+                    const ipRes = await fetch('https://ipwho.is/');
+                    const ipJson = await ipRes.json();
+                    if (!ipJson || !ipJson.latitude || !ipJson.longitude) {
+                        infoEl.textContent = "Could not detect location from IP. Please select district manually.";
+                        return;
+                    }
+                    await fetchServer(ipJson.latitude, ipJson.longitude);
+                } catch (err) {
+                    console.error(err);
+                    infoEl.textContent = "IP-based detection failed. Please fill the form manually.";
+                }
+            }
 
-            infoEl.textContent = "District and weather auto-detected!";
-        } catch (err) {
-            console.error(err);
-            infoEl.textContent = "Failed to fetch district/weather. Fill form manually.";
+            async function fetchServer(lat, lon) {
+                infoEl.textContent = "Fetching district and weather data...";
+                try {
+                    const resp = await fetch('/reverse_geocode', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lat, lon })
+                    });
+                    const data = await resp.json();
+                    if (data.error) throw new Error(data.error);
+
+                    if (data.district_code != null) {
+                        const districtSelect = document.getElementById("district-select");
+                        const opt = Array.from(districtSelect.options).find(o => o.value == data.district_code);
+                        if (opt) districtSelect.value = data.district_code;
+                    }
+
+                    const w = data.weather || {};
+                    document.getElementById("High_Temp").value = w.high_temp || 0;
+                    document.getElementById("Low_Temp").value = w.low_temp || 0;
+                    document.getElementById("Avg_Temp").value = w.avg_temp || 0;
+                    document.getElementById("Rainfall").value = w.rainfall_mm || 0;
+                    document.getElementById("High_Humidity").value = w.high_humidity || 0;
+                    document.getElementById("Low_Humidity").value = w.low_humidity || 0;
+
+                    infoEl.textContent = "District and weather auto-detected!";
+                } catch (err) {
+                    console.error(err);
+                    infoEl.textContent = "Failed to fetch district/weather. Fill form manually.";
+                }
+            }
         }
-    }
-}
 
-// Run on page load
-window.addEventListener('load', detectAndFill);
-</script>
+        window.addEventListener('load', detectAndFill);
+    </script>
+
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,bn',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript"
+        src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
+
 </html>
